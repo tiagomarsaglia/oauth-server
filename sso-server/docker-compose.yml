@@ -1,0 +1,46 @@
+version: '3.7'
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: sso_proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - sso-network
+
+  app:
+    container_name: sso_app
+    build:
+      context: .
+      dockerfile: .docker/Dockerfile
+    ports:
+      - 8000:80
+    environment:
+      - VIRTUAL_PROTO=http
+      - VIRTUAL_HOST=sso.local.com
+
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - sso-network
+
+  db:
+    container_name: sso_db
+    image: mysql:5.7
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_ROOT_PASSWORD: ss0s3rv3r
+      MYSQL_DATABASE: db_sso
+      MYSQL_USER: sso_user
+      MYSQL_PASSWORD: ss0s3rv3r
+    networks:
+      - sso-network
+
+networks:
+  sso-network:
+    name: sso-network
